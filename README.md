@@ -45,7 +45,7 @@ End with an example of getting some data out of the system or using it for a lit
 
 ## Running the tests
 
-Explain how to run the automated tests for this system
+./multiFileTokenReplace.py --token '192.168.0.1' --replace '192.168.3.1' --dir './test' 
 
 ### Break down into end to end tests
 
