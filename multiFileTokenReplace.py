@@ -1,21 +1,26 @@
 import os
 import re
-
+import time
+#from datetime import  timedelta
 """
- small program to replace in line same sized token and replacement 
+ small program to replace in-line same sized token and replacement 
+  will also replace dissimilar sized items with --rewrite flag set to True
 
 """
 
 class multiFileTokenReplace:
     # called with the hash/map from  argparse 
     def __init__(self, args):
+        self.start_time = time.monotonic()
+        self.end_time = 0
         self.rewrite = args.rewrite
         self.backup = args.backup
-        self.log_h = open(args.log, "a+") if args.log != None else None
         self.pos = 0
         self.token = args.token
         self.replacement = args.replace
+        self.setupChangeLog(args.log)
         self.lastFileChanged = None
+        self.numberOfFilesChanged = 0
         
         # todo consider self.rewrite
         if len(args.token) == 0  : 
@@ -60,15 +65,16 @@ class multiFileTokenReplace:
         self.pos = fh.tell()
         line = fh.readline()   
         rewrite_setup = False
+        l_cnt = 0
         while len(line) > 0:
-            if self.validMatchSize(line, file):
+            l_cnt += 1
+            if self.validMatchSize(l_cnt, line, file):
                 newLine = self.matchedToken(line)
                 if self.rewrite and not rewrite_setup:
                     # switching files 
                     handlers = self.setupRewrite(file, fh, self.pos)
                     fh= handlers[0]
                     write_fh=handlers[1]
-                    
                     rewrite_setup = True
                     
                 if newLine != None:
@@ -76,8 +82,7 @@ class multiFileTokenReplace:
                     write_fh.write(newLine)
                     write_fh.flush()
                     os.fsync(write_fh.fileno())
-                    if self.log_h != None:
-                        self.logChanges('oldline:\n\t' + line + 'newLine:\n\t'+ newLine, file)
+                    
             elif rewrite_setup:
                 # write all lines to changed file
                 write_fh.write(line)
@@ -119,16 +124,25 @@ class multiFileTokenReplace:
             rval = newLine[0]  if newLine[1] > 0 else None
         return rval
          
-    def validMatchSize(self, line, file):
+    def validMatchSize(self,l_cnt,  line, file):
         matches= re.findall(self.token,  line)
         rval = True
+        m_cnt = len(matches)
+        if len(matches) and self.log_h != None:
+            self.logChanges ('{}  m> '.format(l_cnt), file)
+        
         for item in matches:
             if len(item) != len(self.replacement) and not self.rewrite:
                 rval = False
                 # todo consider self.rewrite
                 #raise ValueError("search and replace values are not of equal length")
                 self.logMsg(item + 'size is not equal to ' + self.replacement + ' in file:' + file  + "\n")
-                
+            if self.log_h != None:
+                m_cnt -= 1
+                self.logChanges(item + ' ', file)
+                if m_cnt  == 0:
+                    self.logChanges('\n', file)
+        
         return rval
             
     def fileAcessable(self, file):
@@ -143,15 +157,26 @@ class multiFileTokenReplace:
         f.write(msg)
         f.close()
          
+    def setupChangeLog(self, logName):
+        if (logName != None):
+            self.log_h = open(logName, "a+") if args.log != None else None
+            self.log_h.write('Start time: ' + time.strftime("%Y/%m/%d") + " "+ time.strftime("%H:%M:%S") + "\n")
+            self.log_h.write('\treplace '+ self.token + ' with '  +  self.replacement + "\n")
+        
     def logChanges(self, msg, file):
         if self.lastFileChanged == None or self.lastFileChanged != file:
-            self.log_h.write("\n" + file + "\n" + msg + "\n")
+            self.log_h.write("\n" + file + ":\nline  matches:\n" + msg )
             self.lastFileChanged = file
+            self.numberOfFilesChanged +=1 
         elif self.lastFileChanged == file:
             self.log_h.write(msg)
         
     def closeChangeLog(self):
         if self.log_h != None:
+            self.log_h.write('\ntotal number of files changed: {}\n'.format(self.numberOfFilesChanged))
+            self.log_h.write('Ending time: ' + time.strftime("%Y/%m/%d") + " "+ time.strftime("%H:%M:%S") + "\n")
+            self.end_time = time.monotonic()
+            self.log_h.write('Duration: {} seconds'.format(self.end_time - self.start_time) )
             self.log_h.close()
         
 
