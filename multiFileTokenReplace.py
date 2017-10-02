@@ -1,15 +1,16 @@
-
+#!/usr/bin/python
 import sys
 import os
 import re
 import time
-#from datetime import  timedelta
+import monotonic_time
+from datetime import  timedelta
 """
  small program to replace in-line same sized token and replacement
   will also replace dissimilar sized items with --rewrite flag set to True
 
 """
-assert sys.version_info >= (3,6)
+#assert sys.version_info >= (3,2)
 
 class multiFileTokenReplace:
     # called with the hash/map from  argparse
@@ -54,8 +55,11 @@ class multiFileTokenReplace:
                 # Join the two strings in order to form the full filepath.
                 filepath = os.path.join(root, filename)
                 if self.fileAcessable(filepath):
-                    self.fileDance(filepath)
-
+                    try:
+                        if not self.blackList(filepath):
+                            self.fileDance(filepath)
+                    except:
+                        self.logMsg('{} was not scanned \n'.format(filepath))
     """
     fileDance  runs through all the lines in a file if self.rewrite is false the only same size matches and replacements
     will take place.  If rewrite is true then the original file is renamed as the backup, a new
@@ -127,6 +131,20 @@ class multiFileTokenReplace:
             rval = newLine[0]  if newLine[1] > 0 else None
         return rval
 
+    # black listed files
+    # .bak, .jpg, .mp*,png, .tiff, ,.jar, .exe
+    def blackList(self,file):
+        rval = False
+        match = re.match(r"(\.bak|\.jpg|\.mp\d|\.png|\.tiff|\.jar|\.exec)$",file)
+        if match != None:
+            rval = True
+        return rval
+
+    """
+    checks equal size  when rewrite is not set
+    also records the  line number  of the match
+    """
+
     def validMatchSize(self,l_cnt,  line, file):
         matches= re.findall(self.token,  line)
         rval = True
@@ -186,6 +204,8 @@ class multiFileTokenReplace:
 
 if __name__ == "__main__":
     import argparse
+    print(sys.version_info)
+#
     parser = argparse.ArgumentParser(description='token replace multiple files')
     parser.add_argument('--directory', dest='dir',  required=True,  help= 'directory to run threw')
     parser.add_argument('--token',  dest='token', required=True, help= 'token to look for')
@@ -194,6 +214,7 @@ if __name__ == "__main__":
     parser.add_argument('--backup', dest='backup', default=True,  help='create backup of original file')
     parser.add_argument('--log', dest='log', default = 'mtfp_change.log',  help='log file to log all changes')
     args = parser.parse_args()
+
     try:
         mftr = multiFileTokenReplace(args)
         mftr.findNReplace(args.dir)
