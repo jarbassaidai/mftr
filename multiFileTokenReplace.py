@@ -20,22 +20,42 @@ class multiFileTokenReplace:
         self.rewrite = args.rewrite
         self.backup = args.backup
         self.pos = 0
-        self.token = args.token
+        self.token = None #args.token
         self.replacement = args.replace
-        self.setupChangeLog(args.log)
+        self.setupChangeLog(args)
         self.lastFileChanged = None
         self.numberOfFilesChanged = 0
+        self.skipRegex = None #args.skip            # should look like  "(exe|zip|tiff|)$"
+        self.includeRegex = None #args.include       # should look like "(html|conf)$"
+
 
         # todo consider self.rewrite
         if len(args.token) == 0  :
             raise ValueError("zero length token is not allowed")
         elif len(args.replace) == 0 and not self.rewrite:
             raise ValueError("replacement length is zero not allowed")
-        self.compRegx()
+        self.compRegx(args)
 
+    """
+    compile frequently used regex search tokens , token, skipType
 
-    def compRegx(self):
-        self.token = re.compile(re.escape(self.token))
+    """
+
+    def compRegx(self,args):
+        self.token = re.compile(re.escape(args.token))
+         # should look like  "(exe|zip|tiff|)$"
+        if args.skip != None:
+            regex = "("
+            for element in args.skip:
+                regex += '.{}|'.format(element)
+            regex += ')$'
+            self.skipRegex = re.compile(re.escape(regex))
+        if args.include != None:
+            regex = "("
+            for element in args.include:
+                regex += '.{}|'.format(element)
+            regex += ')$'
+            self.includeRegex = re.compile(re.escape(regex))
         #self.replacement = re.compile(re.escape(self.replacement))
 
     def findNReplace(self, directory):
@@ -56,15 +76,19 @@ class multiFileTokenReplace:
                 filepath = os.path.join(root, filename)
                 if self.fileAcessable(filepath):
                     try:
-                        if not self.blackList(filepath):
+                        if self.skipRegex != None and not self.skip(filepath):
                             self.fileDance(filepath)
+                        elif self.includeRegex != None and self.include(filepath):
+                            self.fileDance(filepath)
+
                     except:
                         self.logMsg('{} was not scanned \n'.format(filepath))
+
     """
-    fileDance  runs through all the lines in a file if self.rewrite is false the only same size matches and replacements
-    will take place.  If rewrite is true then the original file is renamed as the backup, a new
-    file with the same name is created and  all the contents to the first difference is copied over.  From that
-    point all lines are copied whether or not there is any change.
+        fileDance  runs through all the lines in a file if self.rewrite is false the only same size matches and replacements
+        will take place.  If rewrite is true then the original file is renamed as the backup, a new
+        file with the same name is created and  all the contents to the first difference is copied over.  From that
+        point all lines are copied whether or not there is any change.
     """
     def fileDance(self, file):
         fh = open(file, 'r+')
@@ -131,11 +155,21 @@ class multiFileTokenReplace:
             rval = newLine[0]  if newLine[1] > 0 else None
         return rval
 
-    # black listed files
+    # file types to skip
     # .bak, .jpg, .mp*,png, .tiff, ,.jar, .exe
-    def blackList(self,file):
+    def skip(self,file):
         rval = False
-        match = re.match(r"(\.bak|\.jpg|\.mp\d|\.png|\.tiff|\.jar|\.exec)$",file)
+        match = self.skipRegex.match(file)
+        #match = re.match(self.skipRegex,file)
+        if match != None:
+            rval = True
+        return rval
+
+    # file types to include
+    def include(self,file):
+        rval = False
+        match = self.includeRegex.match(file)
+        #match = re.match(self.includeRegex,file)
         if match != None:
             rval = True
         return rval
@@ -178,11 +212,11 @@ class multiFileTokenReplace:
         f.write(msg)
         f.close()
 
-    def setupChangeLog(self, logName):
-        if (logName != None):
-            self.log_h = open(logName, "a+") if args.log != None else None
+    def setupChangeLog(self, args):
+        if (args.log != None):
+            self.log_h = open(args.log, "a+") if args.log != None else None
             self.log_h.write('Start time: ' + time.strftime("%Y/%m/%d") + " "+ time.strftime("%H:%M:%S") + "\n")
-            self.log_h.write('\treplace '+ self.token + ' with '  +  self.replacement + "\n")
+            self.log_h.write('\treplace '+ args.token + ' with '  +  args.replace + "\n")
 
     def logChanges(self, msg, file):
         if self.lastFileChanged == None or self.lastFileChanged != file:
@@ -199,8 +233,10 @@ class multiFileTokenReplace:
             self.end_time = time.monotonic()
             self.log_h.write('Duration: {} seconds'.format(self.end_time - self.start_time) )
             self.log_h.close()
-
-
+"""
+example comandline
+./multiFileTokenReplace --directory test --token 34.56.1.234 --replace 12.34.56.89  --skip 'jpg tiff  exe zip gz  tgz ' --include 'html'
+"""
 
 if __name__ == "__main__":
     import argparse
@@ -213,6 +249,8 @@ if __name__ == "__main__":
     parser.add_argument('--rewrite', dest='rewrite', default=True, help='allow different sized search and replace items ')
     parser.add_argument('--backup', dest='backup', default=True,  help='create backup of original file')
     parser.add_argument('--log', dest='log', default = 'mtfp_change.log',  help='log file to log all changes')
+    parser.add_argument('--skip', dest='skip', nargs='+', help='list of file types that are not searched')
+    parser.add_argument('--include',dest='include', nargs='+',help='list of file types to incluce')
     args = parser.parse_args()
 
     try:
