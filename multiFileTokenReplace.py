@@ -248,7 +248,7 @@ if __name__ == "__main__":
     parser.add_argument('--replace', dest='replace', required=True, help='replacement value' )
     parser.add_argument('--rewrite', dest='rewrite', default=True, help='allow different sized search and replace items ')
     parser.add_argument('--backup', dest='backup', default=True,  help='create backup of original file')
-    parser.add_argument('--log', dest='log', default = 'mtfp_change.log',  help='log file to log all changes')
+    parser.add_argument('--log', dest='log', default = 'mftr_change.log',  help='log file to log all changes')
     parser.add_argument('--skip', dest='skip', nargs='+', help='list of file types that are not searched')
     parser.add_argument('--include',dest='include', nargs='+',help='list of file types to incluce')
     args = parser.parse_args()
