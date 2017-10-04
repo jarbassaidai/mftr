@@ -16,6 +16,18 @@ switches :
 * --rewrite    rewrite the file that has changes with out the restriction of  token-match-size == replace-string-size
 * --backup     create a backup file (keep original with .bak extension)
 * --log <l>    create a log file of all lines changed 
+* --skipType <list>  add list of file types to skip
+* --includeTpe < list> add list of file types to include 
+
+default-swithes:
+* --log     mftr_change.log
+* --backup  True
+* exception_log file mftr_msg.log  This is always opened 
+
+required-swithes
+* --replace
+* --directory
+* --token
 
 ### Prerequisites
 
@@ -29,23 +41,12 @@ Give examples
 
 chmod gu+x multiFileTokenReplace.
 
-Say what the step will be
 
-```
-Give the example
-```
-
-And repeat
-
-```
-until finished
-```
-
-End with an example of getting some data out of the system or using it for a little demo
 
 ## Running the tests
 
-./multiFileTokenReplace.py --token '192.168.0.1' --replace '192.168.3.1' --dir './test' 
+./multiFileTokenReplace.py --token '192.168.0.1' --replace '192.168.3.1' --dir './test' --skipType jar gz jpg mp\d 
+./multiFileTokenReplace.py --token '192.168.0.1' --replace '192.168.3.1' --dir './test' --includeType html conf cfg
 
 ### Break down into end to end tests
 
