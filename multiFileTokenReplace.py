@@ -42,7 +42,7 @@ class multiFileTokenReplace:
     """
 
     def compRegx(self,args):
-        self.token = re.compile(re.escape(args.token))
+        self.token = re.compile(args.token)  # do not escape a regular exspresion re.compile(re.escape(args.token))
          # should look like  "(exe|zip|tiff|)$"
         if args.skip != None:
             regex = "("
@@ -80,7 +80,8 @@ class multiFileTokenReplace:
                             self.fileDance(filepath)
                         elif self.includeRegex != None and self.include(filepath):
                             self.fileDance(filepath)
-
+                        else:
+                            self.fileDance(filepath)
                     except:
                         self.logMsg('{} was not scanned \n'.format(filepath))
 
