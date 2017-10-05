@@ -1,4 +1,3 @@
-#!/usr/bin/python
 import sys
 import os
 import re
@@ -10,11 +9,11 @@ from datetime import  timedelta
   will also replace dissimilar sized items with --rewrite flag set to True
 
 """
-#assert sys.version_info >= (3,2)
 
 class multiFileTokenReplace:
     # called with the hash/map from  argparse
     def __init__(self, args):
+        self.pythonVersionCheck()
         self.start_time = time.monotonic()
         self.end_time = 0
         self.rewrite = args.rewrite
@@ -28,7 +27,6 @@ class multiFileTokenReplace:
         self.skipRegex = None #args.skip            # should look like  "(exe|zip|tiff|)$"
         self.includeRegex = None #args.include       # should look like "(html|conf)$"
 
-
         # todo consider self.rewrite
         if len(args.token) == 0  :
             raise ValueError("zero length token is not allowed")
@@ -36,6 +34,12 @@ class multiFileTokenReplace:
             raise ValueError("replacement length is zero not allowed")
         self.compRegx(args)
 
+
+    def pythonVersionCheck(self):
+        if sys.version_info.major < 3 or   sys.version_info.minor  < 2:
+            self.logMsg('python version {}.{} is below minimum required'.format(sys.version_info.major,sys.version_info.minor))
+            print('python version {}.{} is below the minimum required 3.2'.format(sys.version_info.major,sys.version_info.minor))
+            exit(1)
     """
     compile frequently used regex search tokens , token, skipType
 
