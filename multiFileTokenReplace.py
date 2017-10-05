@@ -2,8 +2,11 @@ import sys
 import os
 import re
 import time
-import monotonic_time
-from datetime import  timedelta
+try:
+    import monotonic_time
+    from datetime import  timedelta
+except  ImportError as e:
+    raise ImportError('monotonic_time is a python 3.x module\n You are running {}\n{}'.format(sys.version_info,e))
 """
  small program to replace in-line same sized token and replacement
   will also replace dissimilar sized items with --rewrite flag set to True
