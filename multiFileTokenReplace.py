@@ -10,6 +10,7 @@ except  ImportError as e:
 """
  small program to replace in-line same sized token and replacement
   will also replace dissimilar sized items with --rewrite flag set to True
+TODO: add config file
 
 """
 
