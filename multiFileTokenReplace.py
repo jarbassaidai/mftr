@@ -30,6 +30,7 @@ class multiFileTokenReplace:
         self.numberOfFilesChanged = 0
         self.skipRegex = None #args.skip            # should look like  "(exe|zip|tiff|)$"
         self.includeRegex = None #args.include       # should look like "(html|conf)$"
+        self.revert = args.revert
 
         # todo consider self.rewrite
         if len(args.token) == 0  :
@@ -65,6 +66,28 @@ class multiFileTokenReplace:
             regex += ')$'
             self.includeRegex = re.compile(re.escape(regex))
         #self.replacement = re.compile(re.escape(self.replacement))
+    """
+    revert  all changes by renaming the  .mftr_bck files to  original
+    """
+    def revertFiles(self,directory):
+        # Walk the tree.
+        for root, directories, files in os.walk(directory):
+            for filename in files:
+                fname, ext = os.path.splitext(filename)
+                if ext == '.mftr_bck':
+                    # Join the two strings in order to form the full filepath.
+                    new_filepath = os.path.join(root, fname)
+                    old_filepath = os.path.join(root,filename)
+                    try:
+                        if os.path.exists(new_filepath):
+                            os.remove(new_filepath)
+                        os.rename(old_filepath,new_filepath)
+                    except OSError as e:
+                        print('failed to rename or  remove  {} {}  error:'.format(old_filepath,new_filepath,e))
+                        self.logMsg('failed to rename or  remove  {} {}  error:'.format(old_filepath,new_filepath,e))
+                        continue
+
+        self.revert == False
 
     def findNReplace(self, directory):
         """
@@ -77,7 +100,11 @@ class multiFileTokenReplace:
         """
         #file_paths = []  # List which will store all of the full filepaths.
 
-        # Walk the tree.
+        # Walk the tree.o
+        if self.revert:
+            print  ('--revert switch is set to  true   exiting ' )
+            exit (0)
+
         for root, directories, files in os.walk(directory):
             for filename in files:
                 # Join the two strings in order to form the full filepath.
@@ -110,7 +137,7 @@ class multiFileTokenReplace:
             l_cnt += 1
             if self.validMatchSize(l_cnt, line, file):
                 newLine = self.matchedToken(line)
-                if self.rewrite and not rewrite_setup:
+                if newLine != None and self.rewrite and not rewrite_setup:
                     # switching files
                     handlers = self.setupRewrite(file, fh, self.pos)
                     fh= handlers[0]
@@ -141,8 +168,8 @@ class multiFileTokenReplace:
         new_h = old_h
         if self.backup:
             old_h.close()
-            os.rename(file,file + '.bak' )
-            old_h = open(file + '.bak',  'r')
+            os.rename(file,file + '.mftr_bck' )
+            old_h = open(file + '.mftr_bck',  'r')
             new_h = open(file, 'a+')
             old_h.seek(0, 0)
             pos = 0
@@ -165,7 +192,7 @@ class multiFileTokenReplace:
         return rval
 
     # file types to skip
-    # .bak, .jpg, .mp*,png, .tiff, ,.jar, .exe
+    # .mftr_bck, .jpg, .mp*,png, .tiff, ,.jar, .exe
     def skip(self,file):
         rval = False
         match = self.skipRegex.match(file)
@@ -190,9 +217,9 @@ class multiFileTokenReplace:
 
     def validMatchSize(self,l_cnt,  line, file):
         matches= re.findall(self.token,  line)
-        rval = True
+        rval = True if len(matches) > 0 else  False
         m_cnt = len(matches)
-        if len(matches) and self.log_h != None:
+        if len(matches) > 0 and self.log_h != None:
             self.logChanges ('{}  m> '.format(l_cnt), file)
 
         for item in matches:
@@ -260,11 +287,16 @@ if __name__ == "__main__":
     parser.add_argument('--log', dest='log', default = 'mftr_change.log',  help='log file to log all changes')
     parser.add_argument('--skip', dest='skip', nargs='+', help='list of file types that are not searched')
     parser.add_argument('--include',dest='include', nargs='+',help='list of file types to incluce')
+    parser.add_argument('--revert',dest='revert', default = False, help='rename all the .mftr_bck files to original')
     args = parser.parse_args()
 
     try:
         mftr = multiFileTokenReplace(args)
-        mftr.findNReplace(args.dir)
+        if args.revert == 'True':
+            mftr.revertFiles(args.dir)
+        else:
+            mftr.findNReplace(args.dir)
+
         mftr.closeChangeLog()
     except ValueError as E:
         print(E)
