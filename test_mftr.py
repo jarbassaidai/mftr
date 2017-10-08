@@ -14,8 +14,8 @@ def setup_args():
     parser.add_argument('--rewrite', dest='rewrite', default=True, help='allow different sized search and replace items ')
     parser.add_argument('--backup', dest='backup', default=True,  help='create backup of original file')
     parser.add_argument('--log', dest='log', default = 'mftr_change.log',  help='log file to log all changes')
-    parser.add_argument('--skip', dest='skip', nargs='+', default ="png jpg exe jar z gz mftr_bck", help='list of file types that are not searched')
-    parser.add_argument('--include',dest='include', nargs='+', default = '*' , help='list of file types to incluce')
+    parser.add_argument('--skip', dest='skip', nargs='+', default = 'png,jpg,exe,jar,z,gz,mftr_bck',  help='list of file types that are not searched')
+    parser.add_argument('--include',dest='include', nargs='+' , help='list of file types to incluce')
     parser.add_argument('--revert',dest='revert', default = False, help='rename all the .mftr_bck files to original')
     return  parser.parse_args()
 
@@ -43,28 +43,63 @@ class test_compRegex(unittest.TestCase):  #unittest.TestCase):
         self.args.token = '\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}'
         try:
             self.mftr.compRegx(self.args)
-            match = self.mftr.token.match('234.044.1.093')
-            self.assert_(match != None)
+            match = self.mftr.token.search('234.044.1.093')
+            self.assertEqual(match.group(0),'234.044.1.093')
         except :
             self.assertTrue(False)
 
     def test_skip(self):
         try:
-            match = self.mftr.skipRegex.match('thisisafilename.jpg')
-            self.assert_(match != None)
-            match = self.mftr.skipRegex.match('histisafilename.dat')
-            self.assert_(match == None)
-            match = self.mftr.skipRegex.match('histi.jpg.safilename.dat')
-            self.assert_(match == None)
+            match = self.mftr.skipRegex.search('thisisafilename.jpg')
+            self.assertEqual(match.group(1),'.jpg')
+            match = self.mftr.skipRegex.search('histisafilename.dat')
+            self.assertIsNone(match)
+            match = self.mftr.skipRegex.search('histi.jpg.safilename.dat')
+            self.assertIsNone(match)
         except:
             self.assertTrue(False)
 
     def test_include(self):
-        self.assertTrue(False)
+        self.args.include = 'html,conf,cfg'
+        match = self.mftr.compRegx(self.args)
+        try:
+            match=self.mftr.includeRegex.search('whatAmIdoing.html')
+            self.assertEqual(match.group(1),'.html')
+            match=self.mftr.includeRegex.search('IdontKnow.dat')
+            self.assertIsNone(match)
+        except:
+            self.assertTrue(False)
+
 
 class test_init(unittest.TestCase):
-    def test_notComplete(self):
-        self.assertTrue(False)
+    def __init__(self, *args, **kwargs):
+        unittest.TestCase.__init__(self, *args, **kwargs)
+        self.args = None
+        self.mftr = None
+        self.setup()
+
+    def setup(self):
+        self.args = setup_args()
+        try:
+            self.mftr = multiFileTokenReplace.multiFileTokenReplace(self.args)
+        except:
+            self.assertTrue(False)
+
+    def teardown(self):
+        self.args = None
+        self.mftr = None
+
+    def test_initstuff(self):
+        self.assertGreater(self.mftr.start_time,0)
+        self.assertEqual(self.mftr.end_time,0)
+        self.assertIsNotNone(self.mftr.rewrite)
+        self.assertTrue(self.mftr.rewrite)
+        self.assertIsNotNone(self.mftr.backup)
+        self.assertEqual(self.mftr.pos,0)
+        self.assertIsNotNone(self.mftr.token)
+        self.assertIsNotNone(self.mftr.replacement)
+        self.assertIsNone(self.mftr.lastFileChanged)
+        self.assertEqual(self.mftr.numberOfFilesChanged,0)
 
 class test_fileDance(unittest.TestCase):
     def test_notComplete(self):

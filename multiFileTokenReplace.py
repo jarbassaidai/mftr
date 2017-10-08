@@ -46,26 +46,31 @@ class multiFileTokenReplace:
             print('python version {}.{} is below the minimum required 3.2'.format(sys.version_info.major,sys.version_info.minor))
             exit(1)
     """
+    walk through lists then compile
     compile frequently used regex search tokens , token, skipType
-
     """
+    def mkRegexOpt(self,alist):
+        rval = None;
+        if alist != None:
+            sep = re.search('( |,)',alist)
+            regex = "("
+            if sep != None:
+                for element in alist.split(sep.group(1)):
+                    regex += '\.{}|'.format(element)
+            else:
+                for element in alist:
+                    regex += '\.{}|'.format(element)
+            regex = regex[:-1] # remove last '|'
+            regex += ')$'
+            rval = re.compile(regex) #re.escape(regex)  .. escapes all the special characters which we don't want
+        return rval
 
     def compRegx(self,args):
         self.token = re.compile(args.token)  # do not escape a regular exspresion re.compile(re.escape(args.token))
          # should look like  "(exe|zip|tiff|)$"
-        if args.skip != None:
-            regex = "("
-            for element in args.skip:
-                regex += '\.{}|'.format(element)
-            regex += ')$'
-            self.skipRegex = re.compile(regex) #re.escape(regex)  .. escapes all the special characters which we don't want
-        if args.include != None:
-            regex = "("
-            for element in args.include:
-                regex += '\.{}|'.format(element)
-            regex += ')$'
-            self.includeRegex = re.compile(regex)
-        #self.replacement = re.compile(re.escape(self.replacement))
+        self.skipRegex = self.mkRegexOpt(args.skip)
+        self.includeRegex = self.mkRegexOpt(args.include)
+
     """
     revert  all changes by renaming the  .mftr_bck files to  original
     """
@@ -83,8 +88,8 @@ class multiFileTokenReplace:
                             os.remove(new_filepath)
                         os.rename(old_filepath,new_filepath)
                     except OSError as e:
-                        print('failed to reiname or  remove  {} {}  error:'.format(old_filepath,new_filepath,e))
-                        self.logMsg('failed to rename or  remove  {} {}  error:'.format(old_filepath,new_filepath,e))
+                        print('failed to reiname or  remove  {} {}\n  error:{}'.format(old_filepath,new_filepath,e))
+                        self.logMsg('failed to rename or  remove  {} {}\n  error:{}'.format(old_filepath,new_filepath,e))
                         continue
 
         self.revert == False
@@ -296,8 +301,8 @@ if __name__ == "__main__":
     parser.add_argument('--rewrite', dest='rewrite', default=True, help='allow different sized search and replace items ')
     parser.add_argument('--backup', dest='backup', default=True,  help='create backup of original file')
     parser.add_argument('--log', dest='log', default = 'mftr_change.log',  help='log file to log all changes')
-    parser.add_argument('--skip', dest='skip', nargs='+', help='list of file types that are not searched')
-    parser.add_argument('--include',dest='include', nargs='+',help='list of file types to incluce')
+    parser.add_argument('--skip', dest='skip', nargs='*', type=str, help='list of file types that are not searched **coma** separator')
+    parser.add_argument('--include',dest='include', nargs='*', type=str, help='list of file types to search **coma** separator')
     parser.add_argument('--revert',dest='revert', default = False, help='rename all the .mftr_bck files to original')
     args = parser.parse_args()
 
