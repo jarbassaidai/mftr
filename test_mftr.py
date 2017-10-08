@@ -1,8 +1,9 @@
 # unit tests for mftr
 import unittest
-import multiFileTokenReplace
+from multiFileTokenReplace import MFTR
 import argparse
-
+import os
+import filecmp
 """
 method to setup a parse_args value
 """
@@ -31,7 +32,7 @@ class test_compRegex(unittest.TestCase):  #unittest.TestCase):
     def setup(self):
         self.args = setup_args()
         try:
-            self.mftr = multiFileTokenReplace.multiFileTokenReplace(self.args)
+            self.mftr = MFTR(self.args)
         except:
             self.assertTrue(False)
 
@@ -81,7 +82,7 @@ class test_init(unittest.TestCase):
     def setup(self):
         self.args = setup_args()
         try:
-            self.mftr = multiFileTokenReplace.multiFileTokenReplace(self.args)
+            self.mftr = MFTR(self.args)
         except:
             self.assertTrue(False)
 
@@ -102,12 +103,75 @@ class test_init(unittest.TestCase):
         self.assertEqual(self.mftr.numberOfFilesChanged,0)
 
 class test_fileDance(unittest.TestCase):
-    def test_notComplete(self):
-        self.assertTrue(False)
+    def __init__(self, *args, **kwargs):
+        unittest.TestCase.__init__(self, *args, **kwargs)
+        self.args = None
+        self.mftr = None
+        self.setup()
+
+    def setup(self):
+        self.args = setup_args()
+        try:
+            self.args.dir = 'test'
+            self.args.replacement='192.168.0.0'
+            self.args.token='192.168.1.1'
+            if os.path.isfile('*.log'):
+                os.remove('*.log')
+                os.remove('test/*.mftr_bck')
+            self.mftr = MFTR(self.args)
+        except:
+            self.assertTrue(False)
+
+    def teardown(self):
+        self.args = None
+        self.mftr = None
+        if os.path.isfile('test/test.dat.mftr_bck'):
+            os.remove('test/test.dat')
+            os.rename('test/test.dat.mftr_bck','test/test.dat')
+
+    def sunnyDayMatch(self):
+        self.mftr.fileDance('test/test.dat')
+        self.assertTrue(os.path.isfile('test/test.dat.mftr_bck'))
+        self.mftr.fileDance('test/test.jpg')
+        self.assertFalse(os.path.isfile('test/test.jpg.mftr_bck'))
+
+
+    def noMatch(self):
+        self.mftr.fileDance('test/test.conf')
+        self.assertFalse('test/test.conf.mftr_bck')
+
 
 class test_findNReplace(unittest.TestCase):
-    def test_notComplete(self):
-        self.assertTrue(False)
+     def __init__(self, *args, **kwargs):
+        unittest.TestCase.__init__(self, *args, **kwargs)
+        self.args = None
+        self.mftr = None
+        self.args = setup_args()
+
+        try:
+            self.args.dir = 'test'
+            self.args.replacement='192.168.0.0'
+            self.args.token='192.168.1.1'
+            if os.path.isfile('*.log'):
+                os.remove('*.log')
+                os.remove('test/*.mftr_bck')
+            self.mftr = MFTR(self.args)
+        except:
+            self.assertTrue(False)
+
+     def teardown(self):
+        self.args = None
+        self.mftr = None
+        if os.path.isfile('test/test.dat.mftr_bck'):
+            os.remove('test/test.dat')
+            os.rename('test/test.dat.mftr_bck','test/test.dat')
+
+     def sunnyDay(self):
+        self.mftr.findNReplace(self.args)
+        self.assertTrue(os.path.isfile('test/test.dat'))
+        self.assertTrue(os.path.isfile('test/test.dat.mftr_bck'))
+        self.assertFalse(filecmp.cmp('test/test.dat','test/test.dat.mftr_bck'))
+        self.assertFalse(os.path.isfile('test.conf.mftr_bxk'))
 
 class test_setupRewrite(unittest.TestCase):
     def test_notComplete(self):

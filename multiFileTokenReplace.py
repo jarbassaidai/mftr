@@ -14,7 +14,7 @@ TODO: add config file
 
 """
 
-class multiFileTokenReplace:
+class MFTR:
     # called with the hash/map from  argparse
     def __init__(self, args):
         self.pythonVersionCheck()
@@ -307,7 +307,7 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     try:
-        mftr = multiFileTokenReplace(args)
+        mftr = MFTR(args)
         if args.revert == 'True':
             mftr.revertFiles(args.dir)
         else:
