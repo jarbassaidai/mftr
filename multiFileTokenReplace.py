@@ -56,13 +56,13 @@ class multiFileTokenReplace:
         if args.skip != None:
             regex = "("
             for element in args.skip:
-                regex += '.{}|'.format(element)
+                regex += '\.{}|'.format(element)
             regex += ')$'
             self.skipRegex = re.compile(regex) #re.escape(regex)  .. escapes all the special characters which we don't want
         if args.include != None:
             regex = "("
             for element in args.include:
-                regex += '.{}|'.format(element)
+                regex += '\.{}|'.format(element)
             regex += ')$'
             self.includeRegex = re.compile(regex)
         #self.replacement = re.compile(re.escape(self.replacement))
@@ -83,7 +83,7 @@ class multiFileTokenReplace:
                             os.remove(new_filepath)
                         os.rename(old_filepath,new_filepath)
                     except OSError as e:
-                        print('failed to rename or  remove  {} {}  error:'.format(old_filepath,new_filepath,e))
+                        print('failed to reiname or  remove  {} {}  error:'.format(old_filepath,new_filepath,e))
                         self.logMsg('failed to rename or  remove  {} {}  error:'.format(old_filepath,new_filepath,e))
                         continue
 
@@ -111,14 +111,13 @@ class multiFileTokenReplace:
                 filepath = os.path.join(root, filename)
                 if self.fileAcessable(filepath):
                     try:
-                        if self.include(filepath):  # include overrides skip, 
+                        if self.include(filepath):  # include overrides skip,
                             self.fileDance(filepath)
-                        elif  not self.skip(filepath): 
-                            # not on include list or no include list, and not on skip list 
+                        elif  not self.skip(filepath):
+                            # not on include list or no include list, and not on skip list
                             # or no skip list
                             self.fileDance(filepath)
-                        else:
-                            raise ValueError('strange mix or include and skip switches')
+
                     except  Exception as e:
                         self.logMsg('{}\n{} was not scanned \n'.format(e, filepath))
 
@@ -201,8 +200,11 @@ class multiFileTokenReplace:
             match = self.skipRegex.search(file)
             #match = re.match(self.skipRegex,file)
             if match != None:
-                rval = True
-            
+                s1,s2 = match.span()
+                if s2 - s1 > 0:
+                    rval = True
+                    self.logMsg('on skip list {}\n'.format(file))
+
         return rval
 
     # file types to include
@@ -212,8 +214,11 @@ class multiFileTokenReplace:
             match = self.includeRegex.search(file)
             #match = re.match(self.includeRegex,file)
             if match != None:
-                rval = True
-                
+                s1, s2 =  match.span()
+                if s2 - s1 > 0:
+                    rval = True
+                    self.logMsg('on inlude list {} \n'.format(file))
+
         return rval
 
     """
