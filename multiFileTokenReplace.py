@@ -195,7 +195,7 @@ class multiFileTokenReplace:
     # .mftr_bck, .jpg, .mp*,png, .tiff, ,.jar, .exe
     def skip(self,file):
         rval = False
-        match = self.skipRegex.match(file)
+        match = self.skipRegex.search(file)
         #match = re.match(self.skipRegex,file)
         if match != None:
             rval = True
@@ -204,7 +204,7 @@ class multiFileTokenReplace:
     # file types to include
     def include(self,file):
         rval = False
-        match = self.includeRegex.match(file)
+        match = self.includeRegex.search(file)
         #match = re.match(self.includeRegex,file)
         if match != None:
             rval = True
