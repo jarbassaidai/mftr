@@ -58,13 +58,13 @@ class multiFileTokenReplace:
             for element in args.skip:
                 regex += '.{}|'.format(element)
             regex += ')$'
-            self.skipRegex = re.compile(re.escape(regex))
+            self.skipRegex = re.compile(regex) #re.escape(regex)  .. escapes all the special characters which we don't want
         if args.include != None:
             regex = "("
             for element in args.include:
                 regex += '.{}|'.format(element)
             regex += ')$'
-            self.includeRegex = re.compile(re.escape(regex))
+            self.includeRegex = re.compile(regex)
         #self.replacement = re.compile(re.escape(self.replacement))
     """
     revert  all changes by renaming the  .mftr_bck files to  original
@@ -111,14 +111,16 @@ class multiFileTokenReplace:
                 filepath = os.path.join(root, filename)
                 if self.fileAcessable(filepath):
                     try:
-                        if self.skipRegex != None and not self.skip(filepath):
+                        if self.include(filepath):  # include overrides skip, 
                             self.fileDance(filepath)
-                        elif self.includeRegex != None and self.include(filepath):
+                        elif  not self.skip(filepath): 
+                            # not on include list or no include list, and not on skip list 
+                            # or no skip list
                             self.fileDance(filepath)
                         else:
-                            self.fileDance(filepath)
-                    except:
-                        self.logMsg('{} was not scanned \n'.format(filepath))
+                            raise ValueError('strange mix or include and skip switches')
+                    except  Exception as e:
+                        self.logMsg('{}\n{} was not scanned \n'.format(e, filepath))
 
     """
         fileDance  runs through all the lines in a file if self.rewrite is false the only same size matches and replacements
@@ -195,19 +197,23 @@ class multiFileTokenReplace:
     # .mftr_bck, .jpg, .mp*,png, .tiff, ,.jar, .exe
     def skip(self,file):
         rval = False
-        match = self.skipRegex.search(file)
-        #match = re.match(self.skipRegex,file)
-        if match != None:
-            rval = True
+        if (self.skipRegex != None):
+            match = self.skipRegex.search(file)
+            #match = re.match(self.skipRegex,file)
+            if match != None:
+                rval = True
+            
         return rval
 
     # file types to include
     def include(self,file):
         rval = False
-        match = self.includeRegex.search(file)
-        #match = re.match(self.includeRegex,file)
-        if match != None:
-            rval = True
+        if self.includeRegex != None:
+            match = self.includeRegex.search(file)
+            #match = re.match(self.includeRegex,file)
+            if match != None:
+                rval = True
+                
         return rval
 
     """
