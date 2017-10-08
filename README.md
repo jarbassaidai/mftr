@@ -2,9 +2,9 @@
 
 Not ready for prime time needs more testing !!
 
- Multiple File Token Replace 
+ Multiple File Token Replace
 
-python 3.6 script that allows you  to find a regex token and replace that match with some value in multiple files.  There are options to create a backup file and log all changes.  Other options allow you to overwrite the existing file , but the size of the token-match must equal the size or the replacement string. 
+python 3.6 script that allows you  to find a regex token and replace that match with some value in multiple files.  There are options to create a backup file and log all changes.  Other options allow you to overwrite the existing file , but the size of the token-match must equal the size or the replacement string.
 
 
 ## Getting Started
@@ -12,23 +12,28 @@ python 3.6 script that allows you  to find a regex token and replace that match 
 switches :
 * --token <t>  regex expression to match on
 * --replace <r> string that will be replacing any matched tokens
-* --directory <d>  directory to start the find and replace from 
-* --rewrite    rewrite the file that has changes with out the restriction of  token-match-size == replace-string-size
-* --backup     create a backup file (keep original with .bak extension)
-* --log <l>    create a log file of all lines changed 
+* --directory <d>  directory to start the find and replace from
+* --rewrite <True | False>   rewrite the file that has changes with out the restriction of  token-match-size == replace-string-size
+* --backup  <True | False>   create a backup file (keep original with .bak extension)
+* --log <l>    create a log file of all lines changed
 * --skipType <list>  add list of file types to skip
-* --includeTpe < list> add list of file types to include 
-
+* --includeType < list> add list of file types to include
+* --revert <True| False>
 default-swithes:
 * --log     mftr_change.log
-* --backup  True
-* exception_log file mftr_msg.log  This is always opened 
+* --backup  True   file type  mftr_bck
+* exception_log file mftr_msg.log  This is always opened
 
 required-swithes
 * --replace
 * --directory
 * --token
 
+Notes on swithes
+* --include  is processed be for --skip
+* --revert  overrides  all replacements
+* --skipType can use comma or space for separator
+* --inlcudeType  can use comma or space for separator
 ### Prerequisites
 
 Minimally tested under python 3.6 only
@@ -45,7 +50,7 @@ chmod gu+x multiFileTokenReplace.
 
 ## Running the tests
 
-./multiFileTokenReplace.py --token '192.168.0.1' --replace '192.168.3.1' --dir './test' --skipType jar gz jpg mp\d 
+./multiFileTokenReplace.py --token '192.168.0.1' --replace '192.168.3.1' --dir './test' --skipType jar gz jpg mp\d
 ./multiFileTokenReplace.py --token '192.168.0.1' --replace '192.168.3.1' --dir './test' --includeType html conf cfg
 
 ### Break down into end to end tests
@@ -70,9 +75,9 @@ Add additional notes about how to deploy this on a live system
 
 ## Built With
 
-* 
-* 
-* 
+*
+*
+*
 
 ## Contributing
 
@@ -80,7 +85,7 @@ Please read [CONTRIBUTING.md](https://gist.github.com/PurpleBooth/b24679402957c6
 
 ## Versioning
 
-We use [SemVer](http://semver.org/) for versioning. For the versions available, see the [tags on this repository](https://github.com/your/project/tags). 
+We use [SemVer](http://semver.org/) for versioning. For the versions available, see the [tags on this repository](https://github.com/your/project/tags).
 
 ## Authors
 
@@ -91,7 +96,7 @@ See also the list of [contributors](https://github.com/your/project/contributors
 
 ## License
 
-This project is licensed under the GPL3 
+This project is licensed under the GPL3
 
 ## Acknowledgments
 
