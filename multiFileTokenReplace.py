@@ -51,14 +51,21 @@ class MFTR:
     """
     def mkRegexOpt(self,alist):
         rval = None;
-        if alist != None:
-            sep = re.search('( |,)',alist)
+        elements = None;
+        if alist != None and len(alist) == 1:
+            # split the list element 0 passed in  array of 1
+            elements = alist[0]
+        elif alist !=None and len(alist) > 1:
+            elements = alist   # passed in  string
+
+        if elements != None:
+            sep = re.search('( |,)',elements)
             regex = "("
             if sep != None:
-                for element in alist.split(sep.group(1)):
+                for element in elements.split(sep.group(1)):
                     regex += '\.{}|'.format(element)
             else:
-                for element in alist:
+                for element in elements:
                     regex += '\.{}|'.format(element)
             regex = regex[:-1] # remove last '|'
             regex += ')$'
@@ -301,8 +308,8 @@ if __name__ == "__main__":
     parser.add_argument('--rewrite', dest='rewrite', default=True, help='allow different sized search and replace items ')
     parser.add_argument('--backup', dest='backup', default=True,  help='create backup of original file')
     parser.add_argument('--log', dest='log', default = 'mftr_change.log',  help='log file to log all changes')
-    parser.add_argument('--skip', dest='skip', nargs='*', type=str, help='list of file types that are not searched **coma** separator')
-    parser.add_argument('--include',dest='include', nargs='*', type=str, help='list of file types to search **coma** separator')
+    parser.add_argument('--skip', dest='skip', nargs='*',  help='list of file types that are not searched **comma** separator')
+    parser.add_argument('--include',dest='include', nargs='*',  help='list of file types to search **comma** separator')
     parser.add_argument('--revert',dest='revert', default = False, help='rename all the .mftr_bck files to original')
     args = parser.parse_args()
 
