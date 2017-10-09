@@ -4,6 +4,7 @@ from multiFileTokenReplace import MFTR
 import argparse
 import os
 import filecmp
+import re
 """
 method to setup a parse_args value
 """
@@ -113,7 +114,7 @@ class test_fileDance(unittest.TestCase):
         self.args = setup_args()
         try:
             self.args.dir = 'test'
-            self.args.replacement='192.168.0.0'
+            self.args.replace='192.168.0.0'
             self.args.token='192.168.1.1'
             if os.path.isfile('*.log'):
                 os.remove('*.log')
@@ -129,28 +130,30 @@ class test_fileDance(unittest.TestCase):
             os.remove('test/test.dat')
             os.rename('test/test.dat.mftr_bck','test/test.dat')
 
-    def sunnyDayMatch(self):
+    def test_sunnyDayMatch(self):
         self.mftr.fileDance('test/test.dat')
         self.assertTrue(os.path.isfile('test/test.dat.mftr_bck'))
         self.mftr.fileDance('test/test.jpg')
         self.assertFalse(os.path.isfile('test/test.jpg.mftr_bck'))
 
 
-    def noMatch(self):
+    def test_noMatch(self):
         self.mftr.fileDance('test/test.conf')
-        self.assertFalse('test/test.conf.mftr_bck')
+        self.assertFalse(os.path.isfile('test/test.conf.mftr_bck'))
 
 
 class test_findNReplace(unittest.TestCase):
-     def __init__(self, *args, **kwargs):
+    def __init__(self, *args, **kwargs):
         unittest.TestCase.__init__(self, *args, **kwargs)
         self.args = None
         self.mftr = None
-        self.args = setup_args()
+        self.setup()
 
+    def setup(self):
+        self.args = setup_args()
         try:
             self.args.dir = 'test'
-            self.args.replacement='192.168.0.0'
+            self.args.replace='192.168.0.0'
             self.args.token='192.168.1.1'
             if os.path.isfile('*.log'):
                 os.remove('*.log')
@@ -159,27 +162,91 @@ class test_findNReplace(unittest.TestCase):
         except:
             self.assertTrue(False)
 
-     def teardown(self):
+    def teardown(self):
         self.args = None
         self.mftr = None
         if os.path.isfile('test/test.dat.mftr_bck'):
             os.remove('test/test.dat')
             os.rename('test/test.dat.mftr_bck','test/test.dat')
 
-     def sunnyDay(self):
-        self.mftr.findNReplace(self.args)
+    def test_sunnyDay(self):
+        self.mftr.findNReplace(self.args.dir)
         self.assertTrue(os.path.isfile('test/test.dat'))
         self.assertTrue(os.path.isfile('test/test.dat.mftr_bck'))
         self.assertFalse(filecmp.cmp('test/test.dat','test/test.dat.mftr_bck'))
-        self.assertFalse(os.path.isfile('test.conf.mftr_bxk'))
+        self.assertFalse(os.path.isfile('test.conf.mftr_bck'))
 
 class test_setupRewrite(unittest.TestCase):
-    def test_notComplete(self):
-        self.assertTrue(False)
+
+    def __init__(self, *args, **kwargs):
+        unittest.TestCase.__init__(self, *args, **kwargs)
+        self.args = None
+        self.mftr = None
+        self.setup()
+
+    def setup(self):
+        self.args = setup_args()
+        try:
+            self.args.dir = 'test'
+            self.args.replace='192.168.0.0'
+            self.args.token='192.168.1.1'
+            if os.path.isfile('*.log'):
+                os.remove('*.log')
+                os.remove('test/*.mftr_bck')
+            self.mftr = MFTR(self.args)
+        except:
+            self.assertTrue(False)
+
+    def teardown(self):
+        self.args = None
+        self.mftr = None
+        if os.path.isfile('test/test.dat.mftr_bck'):
+            os.remove('test/test.dat')
+            os.rename('test/test.dat.mftr_bck','test/test.dat')
+
+    def test_uh_Oh(self):
+        self.mftr.findNReplace(self.args.dir)
+        self.assertTrue(os.path.isfile('test/test.dat.mftr_bck'))
+        self.args.revert='True'
+        self.mftr.revertFiles(self.args.dir)
+        self.assertFalse(os.path.isfile('test/test.dat.mftr_bck'))
+
 
 class test_matchedToken(unittest.TestCase):
-    def test_notComplete(self):
-        self.assertTrue(False)
+    def __init__(self, *args, **kwargs):
+        unittest.TestCase.__init__(self, *args, **kwargs)
+        self.args = None
+        self.mftr = None
+        self.setup()
+
+    def setup(self):
+        self.args = setup_args()
+        self.args.token='\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}'
+        self.args.replace='1.1.1.1'
+        self.mftr = MFTR(self.args)
+
+    def test_matchGen(self):
+        line='20393.092834.000.00 other stuff 23.2.3.1'
+        self.assertIsNotNone(self.mftr.matchedToken(line))
+        nline = self.mftr.matchedToken(line)
+        m = re.search(r'1\.1\.1\.1',nline)
+        self.assertEqual('1.1.1.1',m.group(0))
+        line='woriu.oo.qq.aa.aa stuff'
+        self.assertIsNone(self.mftr.matchedToken(line))
+
+    def test_matchSpec(self):
+        self.mftr = None
+        self.args.token='1.1.1.1'
+        self.args.replace='0.0.0.1'
+        self.mftr = MFTR(self.args)
+        line='all kinds of 1.1.1 stuff out there 1.1.1.1'
+        self.assertIsNotNone(self.mftr.matchedToken(line))
+        nline = self.mftr.matchedToken(line)
+        m = re.search(r'0\.0\.0\.1',nline)
+        self.assertEqual('0.0.0.1',m.group(0))
+        line='woriu.oo.qq.aa.aa stuff'
+        self.assertIsNone(self.mftr.matchedToken(line))
+
 
 class test_skip(unittest.TestCase):
     def test_notComplete(self):
@@ -189,9 +256,6 @@ class test_include(unittest.TestCase):
     def test_notComplete(self):
         self.assertTrue(False)
 
-class test_revert(unittest.TestCase):
-    def test_notComplete(self):
-        self.assertTrue(False)
 
 
 class test_validMatchSize(unittest.TestCase):
@@ -233,7 +297,6 @@ def suite():
     suite.addTest(unittest.makeSuite(test_matchedToken))
     suite.addTest(unittest.makeSuite(test_skip))
     suite.addTest(unittest.makeSuite(test_include))
-    suite.addTest(unittest.makeSuite(test_revert))
     suite.addTest(unittest.makeSuite(test_validMatchSize))
     suite.addTest(unittest.makeSuite(test_fileAcessable))
     suite.addTest(unittest.makeSuite(test_logMsg))
