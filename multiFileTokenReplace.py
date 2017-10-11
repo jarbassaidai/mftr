@@ -2,6 +2,8 @@ import sys
 import os
 import re
 import time
+import argparse
+
 try:
     import monotonic_time
     from datetime import  timedelta
@@ -186,7 +188,7 @@ class MFTR:
             new_h = open(file, 'a+')
             old_h.seek(0, 0)
             pos = 0
-            while pos > count :
+            while pos < count :
                 o_line = old_h.readline()
                 new_h.write(o_line)
                 pos = new_h.tell()
@@ -296,24 +298,31 @@ class MFTR:
 example comandline
 ./multiFileTokenReplace --directory test --token 34.56.1.234 --replace 12.34.56.89  --skip 'jpg tiff  exe zip gz  tgz ' --include 'html'
 """
+class MFTR_ARGPARSE:
+    def __init__(self,requiredVal):
+        requiredVal = None if requiredVal == None else requiredVal
+        parser = argparse.ArgumentParser(description='token replace multiple files')
+        parser.add_argument('--directory', dest='dir',  required=requiredVal,  help= 'directory to run threw')
+        parser.add_argument('--token',  dest='token', required=requiredVal, help= 'token to look for')
+        parser.add_argument('--replace', dest='replace', required=True, help='replacement value' )
+        parser.add_argument('--rewrite', dest='rewrite', default=True, help='allow different sized search and replace items ')
+        parser.add_argument('--backup', dest='backup', default=True,  help='create backup of original file')
+        parser.add_argument('--log', dest='log', default = 'mftr_change.log',  help='log file to log all changes')
+        parser.add_argument('--skip', dest='skip', nargs='*',  help='list of file types that are not searched **comma** separator')
+        parser.add_argument('--include',dest='include', nargs='*',  help='list of file types to search **comma** separator')
+        parser.add_argument('--revert',dest='revert', default = False, help='rename all the .mftr_bck files to original')
+        self.args = parser.parse_args()
+
+    def arguments(self):
+        return self.args
+
 
 if __name__ == "__main__":
-    import argparse
     print(sys.version_info)
 #
-    parser = argparse.ArgumentParser(description='token replace multiple files')
-    parser.add_argument('--directory', dest='dir',  required=True,  help= 'directory to run threw')
-    parser.add_argument('--token',  dest='token', required=True, help= 'token to look for')
-    parser.add_argument('--replace', dest='replace', required=True, help='replacement value' )
-    parser.add_argument('--rewrite', dest='rewrite', default=True, help='allow different sized search and replace items ')
-    parser.add_argument('--backup', dest='backup', default=True,  help='create backup of original file')
-    parser.add_argument('--log', dest='log', default = 'mftr_change.log',  help='log file to log all changes')
-    parser.add_argument('--skip', dest='skip', nargs='*',  help='list of file types that are not searched **comma** separator')
-    parser.add_argument('--include',dest='include', nargs='*',  help='list of file types to search **comma** separator')
-    parser.add_argument('--revert',dest='revert', default = False, help='rename all the .mftr_bck files to original')
-    args = parser.parse_args()
-
+    mftrParse = MFTR_ARGPARSE(True)
     try:
+        args = mftrParse.arguments();
         mftr = MFTR(args)
         if args.revert == 'True':
             mftr.revertFiles(args.dir)
